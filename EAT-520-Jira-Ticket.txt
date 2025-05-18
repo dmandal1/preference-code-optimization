@@ -1,0 +1,17 @@
+Implement Notification Mute Functionality for Merchandising Teams
+
+Description:
+
+Backend:
+
+Save Activity:
+
+Before creating any notification, check if the user has enabled notifications for the product merchandising team.
+
+If notifications are disabled, skip the notification creation process.
+
+This affects the saveActivity method in /Users/jainsh/git/project/PCP/p3d-notification-service/src/server/service/activity.service.ts.
+
+Implement a function isNotificationEnabled(user_id, merch_id) to check if notifications are enabled for the given merchandising team. This function will retrieve data from the preference table for the specified user ID.
+
+Call this function around lines 231 and 484 for reference.
