@@ -15,3 +15,19 @@ private buildPreferenceResponse(
     ),
   };
 }
+
+
+
+
+2025-05-19 02:30:42 (node:111) UnhandledPromiseRejectionWarning: TypeError: Cannot read property 'getValidTeamIds' of undefined
+2025-05-19 02:30:42     at /app/src/server/controller/preference.controller.ts:43:47
+2025-05-19 02:30:42     at step (/app/src/server/controller/preference.controller.ts:33:23)
+2025-05-19 02:30:42     at Object.next (/app/src/server/controller/preference.controller.ts:14:53)
+2025-05-19 02:30:42     at /app/src/server/controller/preference.controller.ts:8:71
+2025-05-19 02:30:42     at new Promise (<anonymous>)
+2025-05-19 02:30:42     at __awaiter (/app/src/server/controller/preference.controller.ts:4:12)
+2025-05-19 02:30:42     at PreferenceController.getPreference (/app/src/server/controller/preference.controller.ts:75:16)
+2025-05-19 02:30:42     at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)
+2025-05-19 02:30:42     at next (/app/node_modules/express/lib/router/route.js:137:13)
+2025-05-19 02:30:42     at Route.dispatch (/app/node_modules/express/lib/router/route.js:112:3)
+2025-05-19 02:30:42 (node:111) UnhandledPromiseRejectionWarning: Unhandled promise rejection. This error originated either by throwing inside of an async function without a catch block, or by rejecting a promise which was not handled with .catch(). (rejection id: 7)
