@@ -2,7 +2,7 @@ import { MerchTeamPreference } from '../dao/entity/merchTeamPreference.entity';
 import { PreferenceDAO } from '../dao/preference.dao';
 import { TryCatch } from '../utility/tryCatch';
 import { throwDAOFailedError } from '../utility/customErrors';
-import { CreatePreferencePayload } from '../type/preference.payload.type';
+import { PreferencePayload } from '../type/preference.payload.type';
 import util from 'util';
 const logger = require('../logger');
 const className = '[PreferenceService]';
@@ -14,7 +14,7 @@ export class PreferenceService {
 
   private readonly preferenceDAO = PreferenceDAO.createInstance();
 
-  async savePreference(input: CreatePreferencePayload) {
+  async savePreference(input: PreferencePayload) {
     const methodName = '[savePreference]';
     logger.debug(
       className +
@@ -82,20 +82,8 @@ export class PreferenceService {
     }
 
     logger.debug(className + methodName + 'end');
-    const response = {
-      userId: result.userId,
-      inAppNotification: result.inAppNotification,
-      emailNotification: result.emailNotification,
-      emailFrequency: result.emailFrequency,
-      merchTeamPreference: result.merchTeamPreference?.map(
-        (pref: MerchTeamPreference) => ({
-          teamId: pref.teamId,
-          enableNotification: pref.enableNotification,
-        })
-      ),
-    };
 
-    return response;
+    return this.formatPreferenceResponse(result);
   }
 
   async getPreference(userId: string, userTeams: string[]) {
@@ -131,12 +119,16 @@ export class PreferenceService {
     }
 
     logger.debug(className + methodName + 'end');
+    return this.formatPreferenceResponse(result, mergedTeamPrefs);
+  }
+
+  private formatPreferenceResponse(source: any, merchTeamPrefs?: MerchTeamPreference[]) : PreferencePayload{
     return {
-      userId: result.userId,
-      inAppNotification: result.inAppNotification,
-      emailNotification: result.emailNotification,
-      emailFrequency: result.emailFrequency,
-      merchTeamPreference: mergedTeamPrefs.map((pref: MerchTeamPreference) => ({
+      userId: source.userId,
+      inAppNotification: source.inAppNotification,
+      emailNotification: source.emailNotification,
+      emailFrequency: source.emailFrequency,
+      merchTeamPreference: (merchTeamPrefs || source.merchTeamPreference || []).map((pref: MerchTeamPreference) => ({
         teamId: pref.teamId,
         enableNotification: pref.enableNotification,
       })),
