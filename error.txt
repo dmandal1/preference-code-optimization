@@ -1,7 +1,17 @@
-Type 'MapIterator<[string, boolean]>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
-
-
-Property 'enableNotification' does not exist on type '{}'
-
-Argument of type '{}' is not assignable to parameter of type 'MerchTeamPreference'.
-  Type '{}' is missing the following properties from type 'MerchTeamPreference': id, teamId, enableNotification, preferenceId, and 2 more.
+private buildPreferenceResponse(
+  source: any,
+  merchTeamPrefs?: MerchTeamPreference[]
+): PreferenceResponse {
+  return {
+    userId: source.userId,
+    inAppNotification: source.inAppNotification,
+    emailNotification: source.emailNotification,
+    emailFrequency: String(source.emailFrequency), // convert if needed
+    merchTeamPreference: (merchTeamPrefs || source.merchTeamPreference || []).map(
+      (pref: MerchTeamPreference) => ({
+        teamId: pref.teamId,
+        enableNotification: pref.enableNotification,
+      })
+    ),
+  };
+}
