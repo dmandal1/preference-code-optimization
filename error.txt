@@ -1,0 +1,7 @@
+Type 'MapIterator<[string, boolean]>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+
+
+Property 'enableNotification' does not exist on type '{}'
+
+Argument of type '{}' is not assignable to parameter of type 'MerchTeamPreference'.
+  Type '{}' is missing the following properties from type 'MerchTeamPreference': id, teamId, enableNotification, preferenceId, and 2 more.
