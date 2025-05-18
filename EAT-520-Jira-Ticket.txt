@@ -15,3 +15,12 @@ This affects the saveActivity method in /Users/jainsh/git/project/PCP/p3d-notifi
 Implement a function isNotificationEnabled(user_id, merch_id) to check if notifications are enabled for the given merchandising team. This function will retrieve data from the preference table for the specified user ID.
 
 Call this function around lines 231 and 484 for reference.
+
+
+
+
+you can create two methods to get the preference based on existing preference. If it exists update otherwise create new one. Something like this:
+
+  const preference = existingPref
+      ? this.updateExistingPreference(existingPref, input, updatedTeamPrefs)
+      : this.createNewPreference(input, updatedTeamPrefs);
