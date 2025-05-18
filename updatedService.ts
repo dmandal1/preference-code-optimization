@@ -2,7 +2,7 @@ import { MerchTeamPreference } from '../dao/entity/merchTeamPreference.entity';
 import { PreferenceDAO } from '../dao/preference.dao';
 import { TryCatch } from '../utility/tryCatch';
 import { throwDAOFailedError } from '../utility/customErrors';
-import { CreatePreferencePayload } from '../type/preference.payload.type';
+import { PreferencePayload } from '../type/preference.payload.type';
 import util from 'util';
 
 const logger = require('../logger');
@@ -15,19 +15,25 @@ export class PreferenceService {
 
   private readonly preferenceDAO = PreferenceDAO.createInstance();
 
-  async savePreference(input: CreatePreferencePayload) {
+  async savePreference(input: PreferencePayload) {
     const methodName = '[savePreference]';
     logger.debug(
-      className +
-        methodName +
-        ' start: Save the preference with data ' +
-        util.inspect(input, { depth: null, colors: false })
+      className + methodName +
+      ' start: Save preference for user ' +
+      util.inspect(input, { depth: null, colors: false })
     );
 
     const existingPref = await this.preferenceDAO.getPreference(input.userId);
+
+    const teamPrefs = this.mergeTeamPreferences(
+      existingPref?.merchTeamPreference,
+      input.merchTeamPreference,
+      existingPref
+    );
+
     const preference = existingPref
-      ? this.updateExistingPreference(existingPref, input)
-      : this.createNewPreference(input);
+      ? this.updateExistingPreference(existingPref, input, teamPrefs)
+      : this.createNewPreference(input, teamPrefs);
 
     const [error, result] = await TryCatch.execute(
       this.preferenceDAO.savePreference(preference)
@@ -44,9 +50,7 @@ export class PreferenceService {
 
   async getPreference(userId: string, userTeams: string[]) {
     const methodName = '[getPreference]';
-    logger.debug(
-      className + methodName + ' start: Get the preference of user with userId ' + userId
-    );
+    logger.debug(className + methodName + ` start: Get preference for ${userId}`);
 
     const [error, result] = await TryCatch.execute(
       this.preferenceDAO.getPreference(userId)
@@ -59,86 +63,105 @@ export class PreferenceService {
 
     if (!result) return null;
 
-    const teamPrefs = result.merchTeamPreference ?? [];
-    const existingMap = new Map(teamPrefs.map(t => [t.teamId, t]));
+    const teamPrefs = this.mergeMissingTeams(result.merchTeamPreference, userTeams);
+
+    logger.debug(className + methodName + ' end');
+    return this.formatPreferenceResponse(result, teamPrefs);
+  }
+
+  // ---- Helper Methods ----
+
+  private mergeTeamPreferences(
+    existingTeams: MerchTeamPreference[] = [],
+    incomingPrefs: { teamId: string; enableNotification: boolean }[],
+    existingPrefEntity?: any
+  ): MerchTeamPreference[] {
+    const incomingMap = new Map(
+      incomingPrefs.map(t => [t.teamId, t.enableNotification])
+    );
+
+    const updatedTeams: MerchTeamPreference[] = [];
+
+    for (const team of existingTeams) {
+      if (incomingMap.has(team.teamId)) {
+        team.enableNotification = incomingMap.get(team.teamId)!;
+        incomingMap.delete(team.teamId);
+      } else {
+        team.enableNotification = false;
+      }
+      updatedTeams.push(team);
+    }
+
+    for (const [teamId, enableNotification] of incomingMap.entries()) {
+      const newTeam = new MerchTeamPreference();
+      newTeam.teamId = teamId;
+      newTeam.enableNotification = enableNotification;
+      if (existingPrefEntity) newTeam.preferenceId = existingPrefEntity;
+      updatedTeams.push(newTeam);
+    }
+
+    return updatedTeams;
+  }
+
+  private mergeMissingTeams(
+    teamPrefs: MerchTeamPreference[] = [],
+    userTeams: string[] = []
+  ): MerchTeamPreference[] {
+    const existingTeamIds = new Set(teamPrefs.map(t => t.teamId));
+    const result = [...teamPrefs];
 
     for (const teamId of userTeams) {
-      if (!existingMap.has(teamId)) {
+      if (!existingTeamIds.has(teamId)) {
         const newTeam = new MerchTeamPreference();
         newTeam.teamId = teamId;
         newTeam.enableNotification = true;
-        teamPrefs.push(newTeam);
+        result.push(newTeam);
       }
     }
 
-    result.merchTeamPreference = teamPrefs;
-
-    logger.debug(className + methodName + ' end');
-    return this.formatPreferenceResponse(result);
+    return result;
   }
 
-  private updateExistingPreference(existing, input: CreatePreferencePayload) {
+  private updateExistingPreference(
+    existing: any,
+    input: PreferencePayload,
+    teamPrefs: MerchTeamPreference[]
+  ) {
     existing.inAppNotification = input.inAppNotification;
     existing.emailNotification = input.emailNotification;
     existing.emailFrequency = input.emailFrequency;
-
-    const incomingMap = new Map(input.merchTeamPreference.map(t => [t.teamId, t.enableNotification]));
-    const existingMap = new Map(existing.merchTeamPreference.map(t => [t.teamId, t]));
-
-    const mergedPrefs: MerchTeamPreference[] = [];
-
-    for (const [teamId, enableNotification] of incomingMap.entries()) {
-      const existingTeam = existingMap.get(teamId);
-      if (existingTeam) {
-        existingTeam.enableNotification = enableNotification;
-        mergedPrefs.push(existingTeam);
-        existingMap.delete(teamId);
-      } else {
-        mergedPrefs.push(
-          Object.assign(new MerchTeamPreference(), {
-            teamId,
-            enableNotification,
-            preferenceId: existing,
-          })
-        );
-      }
-    }
-
-    // Set enableNotification = false for teams not present in input
-    for (const remainingTeam of existingMap.values()) {
-      remainingTeam.enableNotification = false;
-      mergedPrefs.push(remainingTeam);
-    }
-
-    existing.merchTeamPreference = mergedPrefs;
+    existing.merchTeamPreference = teamPrefs;
     return existing;
   }
 
-  private createNewPreference(input: CreatePreferencePayload) {
+  private createNewPreference(
+    input: PreferencePayload,
+    teamPrefs: MerchTeamPreference[]
+  ) {
     return {
       userId: input.userId,
       inAppNotification: input.inAppNotification,
       emailNotification: input.emailNotification,
       emailFrequency: input.emailFrequency,
-      merchTeamPreference: input.merchTeamPreference.map(t =>
-        Object.assign(new MerchTeamPreference(), {
-          teamId: t.teamId,
-          enableNotification: t.enableNotification,
-        })
-      ),
+      merchTeamPreference: teamPrefs,
     };
   }
 
-  private formatPreferenceResponse(preference): any {
+  private formatPreferenceResponse(
+    source: any,
+    teamPrefs?: MerchTeamPreference[]
+  ): PreferencePayload {
     return {
-      userId: preference.userId,
-      inAppNotification: preference.inAppNotification,
-      emailNotification: preference.emailNotification,
-      emailFrequency: preference.emailFrequency,
-      merchTeamPreference: preference.merchTeamPreference?.map(pref => ({
-        teamId: pref.teamId,
-        enableNotification: pref.enableNotification,
-      })),
+      userId: source.userId,
+      inAppNotification: source.inAppNotification,
+      emailNotification: source.emailNotification,
+      emailFrequency: source.emailFrequency,
+      merchTeamPreference: (teamPrefs || source.merchTeamPreference || []).map(
+        (pref: MerchTeamPreference) => ({
+          teamId: pref.teamId,
+          enableNotification: pref.enableNotification,
+        })
+      ),
     };
   }
 }
