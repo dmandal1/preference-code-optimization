@@ -1,96 +1,72 @@
-import { PreferenceController } from './../../src/server/controller/preference.controller';
 import { Request, Response } from 'express';
-import { PreferencePayload } from '../../src/server/type/preference.payload.type';
+import { PreferenceController } from '../../src/server/controller/preference.controller';
+import { PreferenceService } from '../../src/server/service/preference.service';
 import { EmailFrequency } from '../../src/server/enum/email.frequency.enum';
+import { PreferencePayload } from '../../src/server/type/preference.payload.type';
 
-const getPreferenceService = (throwError: boolean = false) => {
-  const service = require('../../src/server/service/preference.service')
-    .PreferenceService;
-  service.createInstance = async () => {
-    return {
-      getPreference: throwError
-        ? jest.fn().mockRejectedValue(new Error('ERROR'))
-        : jest.fn().mockResolvedValue({}),
-      savePreference: throwError
-        ? jest.fn().mockRejectedValue(new Error('ERROR'))
-        : jest.fn().mockResolvedValue({}),
-    };
-  };
-  return service;
-};
-
-const getPreferenceController = () =>
-  require('../../src/server/controller/preference.controller')
-    .PreferenceController;
+jest.mock('../../src/server/service/preference.service');
 
 describe('Preference Controller test cases', () => {
-  it('Preference controller create instance method passed', async () => {
-    const preferenceController = PreferenceController.createInstance();
-    expect(preferenceController).toBeTruthy();
+  let req: Partial<Request>;
+  let res: Partial<Response>;
+  let next: jest.Mock;
+
+  beforeEach(() => {
+    req = {
+      params: {},
+      body: {},
+      user: { email: 'dummy', merchandisingTeams: ['team1', 'team2'] },
+    };
+    res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    next = jest.fn();
   });
 
-  it('preference controller create instance method passed', async () => {
-    const preferenceController = getPreferenceController().createInstance();
-    expect(preferenceController).toBeTruthy();
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
-  it('preference controller get preference method passed', async () => {
-    const request = {} as Request;
-    const response = {} as Response;
-    response.status = jest.fn().mockReturnThis();
-    response.json = jest.fn().mockReturnThis();
-    const nextFunc = jest.fn();
-    request.params = { userId: 'dummy' };
-    request.user = { email: 'dummy', merchandisingTeams: ['team1', 'team2'] };
+  it('should return preferences successfully', async () => {
+    const mockService = {
+      getPreference: jest.fn().mockResolvedValue({ success: true }),
+    };
 
-    // Test error case
-    getPreferenceService(true);
-    await getPreferenceController()
-      .createInstance()
-      .getPreference(request, response, nextFunc);
+    (PreferenceService.createInstance as jest.Mock).mockResolvedValue(
+      mockService
+    );
 
-    // Test success case
-    getPreferenceService(false);
-    await getPreferenceController()
-      .createInstance()
-      .getPreference(request, response, nextFunc);
+    req.params = { userId: 'dummy' };
 
-    expect(response.status).toBeCalled();
-    expect(response.json).toBeCalled();
+    const controller = await PreferenceController.createInstance();
+    await controller.getPreference(req as Request, res as Response, next);
+
+    expect(mockService.getPreference).toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ success: true });
   });
 
-  it('preference controller get preference method passed when userId is null', async () => {
-    const request = {} as Request;
-    const response = {} as Response;
-    response.status = jest.fn().mockReturnThis();
-    response.json = jest.fn().mockReturnThis();
-    const nextFunc = jest.fn();
-    request.params = { userId: '' };
-    request.user = { email: '', merchandisingTeams: ['team1'] };
+  it('should handle error when getPreference fails', async () => {
+    const mockService = {
+      getPreference: jest.fn().mockRejectedValue(new Error('Something went wrong')),
+    };
 
-    // Test error case
-    getPreferenceService(true);
-    await getPreferenceController()
-      .createInstance()
-      .getPreference(request, response, nextFunc);
+    (PreferenceService.createInstance as jest.Mock).mockResolvedValue(
+      mockService
+    );
 
-    // Test success case
-    getPreferenceService(false);
-    await getPreferenceController()
-      .createInstance()
-      .getPreference(request, response, nextFunc);
+    req.params = { userId: 'dummy' };
 
-    expect(response.status).toBeCalled();
+    const controller = await PreferenceController.createInstance();
+    await controller.getPreference(req as Request, res as Response, next);
+
+    expect(mockService.getPreference).toHaveBeenCalled();
+    expect(next).toHaveBeenCalled(); // Ensure error was forwarded
   });
 
-  it('preference service save preference method passed', async () => {
-    const request = {} as Request;
-    const response = {} as Response;
-    response.status = jest.fn().mockReturnThis();
-    response.json = jest.fn().mockReturnThis();
-    const nextFunc = jest.fn();
-
-    const preferencePayload: PreferencePayload = {
+  it('should save preferences successfully', async () => {
+    const payload: PreferencePayload = {
       userId: 'user1',
       inAppNotification: true,
       emailNotification: true,
@@ -101,24 +77,47 @@ describe('Preference Controller test cases', () => {
       ],
     };
 
-    request.body = preferencePayload;
-    request.user = { email: 'user1' };
+    req.body = payload;
 
-    const mockPreferenceService = {
-      savePreference: jest.fn().mockResolvedValue(preferencePayload),
+    const mockService = {
+      savePreference: jest.fn().mockResolvedValue(payload),
     };
 
-    jest
-      .spyOn(getPreferenceService(), 'createInstance')
-      .mockReturnValue(mockPreferenceService);
-
-    await getPreferenceController()
-      .createInstance()
-      .savePreference(request, response, nextFunc);
-
-    expect(mockPreferenceService.savePreference).toHaveBeenCalledWith(
-      preferencePayload
+    (PreferenceService.createInstance as jest.Mock).mockResolvedValue(
+      mockService
     );
-    expect(response.status).toHaveBeenCalledWith(200);
+
+    const controller = await PreferenceController.createInstance();
+    await controller.savePreference(req as Request, res as Response, next);
+
+    expect(mockService.savePreference).toHaveBeenCalledWith(payload);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(payload);
+  });
+
+  it('should handle error when savePreference fails', async () => {
+    const payload: PreferencePayload = {
+      userId: 'user1',
+      inAppNotification: true,
+      emailNotification: true,
+      emailFrequency: EmailFrequency.DAILY,
+      merchTeamPreference: [],
+    };
+
+    req.body = payload;
+
+    const mockService = {
+      savePreference: jest.fn().mockRejectedValue(new Error('Save failed')),
+    };
+
+    (PreferenceService.createInstance as jest.Mock).mockResolvedValue(
+      mockService
+    );
+
+    const controller = await PreferenceController.createInstance();
+    await controller.savePreference(req as Request, res as Response, next);
+
+    expect(mockService.savePreference).toHaveBeenCalledWith(payload);
+    expect(next).toHaveBeenCalled(); // Error should be passed to next()
   });
 });
