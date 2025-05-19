@@ -1,5 +1,49 @@
- × preference controller get preference method passed (19ms)
- × preference controller get preference method passed when userId is null (2ms)      
+ Preference Controller test cases
+    √ Preference controller create instance method passed (4ms)
+    √ preference controller create instance method passed (3ms)
+    × preference controller get preference method passed (34ms)
+    × preference controller get preference method passed when userId is null (3ms)      
+    √ preference service save preference method passed (4ms)
+
+  ● Preference Controller test cases › preference controller get preference method passed
+
+    ConnectionNotFoundError: Connection "default" was not found.
+
+      at new ConnectionNotFoundError (src/error/ConnectionNotFoundError.ts:8:9)
+      at ConnectionManager.Object.<anonymous>.ConnectionManager.get (src/connection/ConnectionManager.ts:40:19)
+      at Object.getManager (src/index.ts:261:35)
+      at PreferenceController.<anonymous> (src/server/controller/preference.controller.ts:20:27)
+      at step (src/server/controller/preference.controller.ts:33:23)
+      at Object.next (src/server/controller/preference.controller.ts:14:53)
+      at src/server/controller/preference.controller.ts:8:71
+      at Object.<anonymous>.__awaiter (src/server/controller/preference.controller.ts:4:12)
+      at PreferenceController.getValidTeamIds (src/server/controller/preference.controller.ts:19:29)
+
+  ● Preference Controller test cases › preference controller get preference method passed when userId is null
+
+    ConnectionNotFoundError: Connection "default" was not found.
+
+      at new ConnectionNotFoundError (src/error/ConnectionNotFoundError.ts:8:9)
+      at ConnectionManager.Object.<anonymous>.ConnectionManager.get (src/connection/ConnectionManager.ts:40:19)
+      at Object.getManager (src/index.ts:261:35)
+      at PreferenceController.<anonymous> (src/server/controller/preference.controller.ts:20:27)
+      at step (src/server/controller/preference.controller.ts:33:23)
+      at Object.next (src/server/controller/preference.controller.ts:14:53)
+      at src/server/controller/preference.controller.ts:8:71
+      at Object.<anonymous>.__awaiter (src/server/controller/preference.controller.ts:4:12)
+      at PreferenceController.getValidTeamIds (src/server/controller/preference.controller.ts:19:29)
+      at src/server/controller/preference.controller.ts:8:71
+      at Object.<anonymous>.__awaiter (src/server/controller/preference.controller.ts:4:12)
+      at PreferenceController.getValidTeamIds (src/server/controller/preference.controller.ts:19:29)
+12)
+      at PreferenceController.getValidTeamIds (src/server/controller/preference.controller.ts:19:29)
+      at PreferenceController.getValidTeamIds (src/server/controller/preference.controller.ts:19:29)
+
+Test Suites: 1 failed, 1 total
+Tests:       2 failed, 3 passed, 5 total
+Snapshots:   0 total
+Time:        8.504s
+Ran all test suites matching /c:\\Users\\deepak.mandal\\Desktop\\PCP\\p3d-notification-service\\test\\controllers\\preference.controller.test.ts/i with tests matching "Preference Controller test cases".   
 
 
 
