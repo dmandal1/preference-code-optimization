@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import httpStatusCodes from 'http-status-codes';
 import { PreferenceService } from '../service/preference.service';
-import { CreatePreferencePayload } from '../type/preference.payload.type';
+import { PreferencePayload } from '../type/preference.payload.type';
 import { HttpResponse } from '../utility/http.response';
 import { EmailFrequency } from '../enum/email.frequency.enum';
 import { Utils } from '../utility/utils';
@@ -16,19 +16,19 @@ export class PreferenceController {
     return new PreferenceController();
   }
 
-  private async getValidTeamIds(): Promise<string[]> {
-    const entityMangager = getManager();
-    const result = await entityMangager.query(
+  private getValidTeamIds = async (): Promise<string[]> => {
+    const entityManager = getManager();
+    const result = await entityManager.query(
       'SELECT team_id as "teamId" FROM pcp.merchandising_teams;'
     );
     return result.map((team: { teamId: string }) => team.teamId);
-  }
+  };
 
-  async getPreference(
+  getPreference = async (
     request: Request,
     response: Response,
     next: NextFunction
-  ) {
+  ) => {
     const methodName = '[getPreference]';
     logger.debug(
       className +
@@ -45,10 +45,10 @@ export class PreferenceController {
     const preferenceService = await PreferenceService.createInstance();
 
     let [, result] = await TryCatch.execute(
-      preferenceService.getPreference(userId, filteredUserTeams)
+      preferenceService.getPreference(userId, userTeams)
     );
     const [error] = await TryCatch.execute(
-      preferenceService.getPreference(userId, filteredUserTeams)
+      preferenceService.getPreference(userId, userTeams)
     );
 
     if (error) {
@@ -58,6 +58,7 @@ export class PreferenceController {
         error
       );
     }
+
 
     if (!result) {
       result = {};
@@ -80,13 +81,13 @@ export class PreferenceController {
     );
 
     logger.info(className + methodName + 'end');
-  }
+  };
 
-  async savePreference(
+  savePreference = async (
     request: Request,
     response: Response,
     next: NextFunction
-  ) {
+  ) => {
     const methodName = '[savePreference]';
     logger.debug(
       className +
@@ -95,7 +96,7 @@ export class PreferenceController {
         util.inspect(request.user, { depth: null, colors: false })
     );
     const userId: string = request.user ? request.user.email : '';
-    const input: CreatePreferencePayload = request.body;
+    const input: PreferencePayload = request.body;
     if (userId) {
       input.userId = userId;
     }
@@ -123,5 +124,5 @@ export class PreferenceController {
     );
 
     logger.info(className + methodName + 'end');
-  }
+  };
 }
