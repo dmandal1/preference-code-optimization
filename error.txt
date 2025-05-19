@@ -1,4 +1,70 @@
- Preference Controller test cases
+Type declaration of 'any' loses type-safety. Consider replacing it with a more precise type. (no-any)
+  80 |     existingTeams: MerchTeamPreference[] = [],
+  81 |     incomingPrefs: MerchTeamsPreferenceInput[],
+> 82 |     existingPref?: any
+     |                   ^
+  83 |   ): MerchTeamPreference[] {
+  84 |     const incomingMap = new Map(
+  85 |       incomingPrefs.map(t => [t.teamId, t.enableNotification])
+
+Type declaration of 'any' loses type-safety. Consider replacing it with a more precise type. (no-any)
+  131 |
+  132 |   private updateExistingPreference(
+> 133 |     existing: any,
+      |              ^
+  134 |     input: PreferencePayload,
+  135 |     teamPrefs: MerchTeamPreference[]
+  136 |   ) {
+
+Type declaration of 'any' loses type-safety. Consider replacing it with a more precise type. (no-any)
+  156 |
+e precise type. (no-any)
+  156 |
+  157 |   private formatPreferenceResponse(
+> 158 |     source: any,
+      |            ^
+  159 |     merchTeamPrefs?: MerchTeamPreference[]
+  160 |   ): PreferencePayload {
+  161 |     return {
+
+
+error Command failed with exit code 1.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Preference Controller test cases
     √ Preference controller create instance method passed (4ms)
     √ preference controller create instance method passed (3ms)
     × preference controller get preference method passed (34ms)
